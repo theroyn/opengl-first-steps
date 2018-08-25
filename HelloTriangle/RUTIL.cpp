@@ -7,8 +7,7 @@
 #include <fstream>
 #include <algorithm>
 
-#define GLFW_DLL
-#include <GLFW/glfw3.h>
+
 
 using namespace std;
 
@@ -43,7 +42,7 @@ GLuint load_shader(const char *path, GLenum type, GLint &result, std::vector<GLc
   int logLength;
 
   // Compile vertex shader
-  cout << "Compiling shader." << endl;
+  dbg_print("Compiling shader.");
   glShaderSource(shader, 1, &shaderSrc, NULL);
   glCompileShader(shader);
 
@@ -57,7 +56,7 @@ GLuint load_shader(const char *path, GLenum type, GLint &result, std::vector<GLc
   }
   else
   {
-    cout << "Successful compilation." << endl;
+    dbg_print("Successful compilation.");
   }
 
   return shader;
@@ -119,4 +118,29 @@ int r_exit(int code, const string &msg)
 
 
   return code;
+}
+
+void _update_fps_counter(GLFWwindow* window)
+{
+  static double previous_seconds = glfwGetTime();
+  static int frame_count;
+  double current_seconds = glfwGetTime();
+  double elapsed_seconds = current_seconds - previous_seconds;
+  if (elapsed_seconds > 0.25)
+  {
+    previous_seconds = current_seconds;
+    double fps = (double)frame_count / elapsed_seconds;
+    char tmp[128];
+    sprintf_s(tmp, "opengl @ fps: %.2f", fps);
+    glfwSetWindowTitle(window, tmp);
+    frame_count = 0;
+  }
+  frame_count++;
+}
+
+void r_update_fps_counter(GLFWwindow* window)
+{
+#ifdef _DEBUG
+  _update_fps_counter(window);
+#endif
 }
