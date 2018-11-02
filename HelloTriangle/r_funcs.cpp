@@ -146,14 +146,23 @@ void process_input(GLFWwindow *window)
     params::param += (params::param_speed * dir);
   }
 
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    params::camera_pos += params::camera_speed * params::camera_front;
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    params::camera_pos -= params::camera_speed * params::camera_front;
+  float dirY = params::camera_pos.y > 0 ? 1 : -1;
+  glm::vec3 forward = glm::normalize(params::camera_front - params::camera_pos);
+  glm::vec3 right = glm::normalize(glm::cross(forward, params::camera_up));
+  glm::vec3 up = glm::normalize(glm::cross(right, forward));
+
+  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    params::camera_pos -= params::camera_speed * forward;
+  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    params::camera_pos += params::camera_speed * forward;
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    params::camera_pos -= glm::normalize(glm::cross(params::camera_front, params::camera_up)) * params::camera_speed;
+    params::camera_pos -= right * params::camera_speed;
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    params::camera_pos += glm::normalize(glm::cross(params::camera_front, params::camera_up)) * params::camera_speed;
+    params::camera_pos += right * params::camera_speed;
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    params::camera_pos -= up * params::camera_speed;
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    params::camera_pos += up * params::camera_speed;
 }
 
 int r_draw_texture_box(GLFWwindow *window)
