@@ -13,8 +13,10 @@ Camera::Camera(const glm::vec3 &pos,
   pitch_(0.),
   yaw_(0.),
   cursor_(0., 0.),
+  zoom_speed_(3.f),
+  fov_(DEFAULT_ZOOM),
   translation_speed_(0.005f),
-  spin_speed_(0.1f),
+  spin_speed_(.1f),
   is_cursor_init_(false)
 {
   up_ = world_up_;
@@ -25,8 +27,6 @@ Camera::Camera(const glm::vec3 &pos,
 void Camera::step_forward(int dir)
 {
   glm::vec3 forward = glm::normalize(front_);
-  glm::vec3 right = glm::normalize(glm::cross(forward, world_up_));
-  // glm::vec3 up = glm::normalize(glm::cross(right, forward));
 
   glm::vec3 inc = forward * translation_speed_ * ( float )dir;
   inc.y = 0;
@@ -39,10 +39,11 @@ void Camera::step_right(int dir)
 {
   glm::vec3 forward = glm::normalize(front_);
   glm::vec3 right = glm::normalize(glm::cross(forward, world_up_));
-  // glm::vec3 up = glm::normalize(glm::cross(right, forward));
 
-  // right.y is always 0 because world_up_.xz are always(0,0).
-  // If world_up_ changes an update will be neccessary.
+  /**
+   * right.y is always 0 because world_up_.xz are always(0,0).
+   * If world_up_ changes an update will be neccessary.
+   */
   pos_ += right * translation_speed_ * ( float )dir;
   update_view();
 }
@@ -50,6 +51,47 @@ void Camera::step_right(int dir)
 void Camera::increase_pos(const glm::vec3 &pos)
 {
   pos_ += translation_speed_ * pos;
+}
+
+void Camera::process_keyboard_input(GLFWwindow *window)
+{
+  if (int key_u = glfwGetKey(window, GLFW_KEY_W),
+      key_d = glfwGetKey(window, GLFW_KEY_S);
+      GLFW_PRESS == key_u || GLFW_PRESS == key_d)
+  {
+    int dir = (key_u == GLFW_PRESS) ? 1 : -1;
+    step_forward(dir);
+  }
+
+  if (int key_r = glfwGetKey(window, GLFW_KEY_D),
+      key_l = glfwGetKey(window, GLFW_KEY_A);
+      GLFW_PRESS == key_r || GLFW_PRESS == key_l)
+  {
+    int dir = (key_r == GLFW_PRESS) ? 1 : -1;
+    step_right(dir);
+  }
+}
+
+void Camera::zoom(double y_off)
+{
+  fov_ -= zoom_speed_ * y_off;
+
+  if (double upper_lim = 180.; fov_ + CAMERA_EPSILON > upper_lim)
+    fov_ = upper_lim - CAMERA_EPSILON;
+  else if (fov_ - CAMERA_EPSILON < 0)
+    fov_ = CAMERA_EPSILON;
+}
+
+void Camera::reset_zoom()
+{
+  fov_ = DEFAULT_ZOOM;
+}
+
+float Camera::get_fov()
+{
+  float fov = glm::radians(fov_);
+
+  return fov;
 }
 
 void Camera::update_view()
@@ -63,16 +105,6 @@ void Camera::update_view()
   /*cout << "front_:" << front_.x << ", " << front_.y << ", " << front_.z << endl;
   cout << "right:" << right.x << ", " << right.y << ", " << right.z << endl;
   cout << "up_:" << up_.x << ", " << up_.y << ", " << up_.z << endl;*/
-
-  //// Calculate the new Front vector
-  //glm::vec3 front;
-  //front.x = cos(glm::radians(yaw_)) * cos(glm::radians(pitch_));
-  //front.y = sin(glm::radians(pitch_));
-  //front.z = sin(glm::radians(yaw_)) * cos(glm::radians(pitch_));
-  //front_ = glm::normalize(front);
-  //// Also re-calculate the Right and Up vector
-  //glm::vec3 Right = glm::normalize(glm::cross(front_, world_up_));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-  //up_ = glm::normalize(glm::cross(Right, front_));
 }
 
 glm::mat4 Camera::get_view() const

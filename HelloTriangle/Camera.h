@@ -5,6 +5,9 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+#define CAMERA_EPSILON 0.0000001f
+#define DEFAULT_ZOOM 45.
+
 class Camera
 {
 public:
@@ -16,18 +19,23 @@ public:
   glm::mat4 get_view() const;
   void increase_pos(const glm::vec3 &pos);
   void update_view();
-  void step_forward(int dir);
-  void step_right(int dir);
   void set_cursor(double x, double y);
+  void process_keyboard_input(GLFWwindow *window);
+  void reset_zoom();
+  float get_fov();
+  void zoom(double y_off);
 
 private:
   void increase_pitch(double pitch);
   void increase_yaw(double yaw);
   void offset_angles(double xoff, double yoff);
+  void step_forward(int dir);
+  void step_right(int dir);
 
 private:
   double pitch_, yaw_;
-  float spin_speed_, translation_speed_;
+  double fov_;
+  float spin_speed_, translation_speed_, zoom_speed_;
   bool is_cursor_init_;
 
 private:
@@ -39,6 +47,5 @@ private:
   glm::vec2 cursor_;
 
 };
-
 
 #endif
