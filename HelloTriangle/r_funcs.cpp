@@ -2,18 +2,29 @@
 #include "r_funcs.h"
 #include <algorithm>
 #include "coords.h"
+#include <iostream>
 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+#include "Camera.h"
+
 void process_input(GLFWwindow *window);
+void update_delta();
+static void mouse_cb(GLFWwindow *window, double xpos, double ypos);
 
 namespace params
 {
-  static GLfloat visibility_val = 0.2f, param = 1.f, speed = 0.0002f, param_speed = 0.002f, camera_speed = 0.005f;
-  static glm::vec3 camera_pos(0.f, 0.f, 3.f), camera_front(0.f, 0.f, -1.f), camera_up(0.f, 1.f, 0.f);
+  static GLfloat visibility_val = 0.2f, param = 1.f, speed = 0.0002f,
+                 param_speed = 0.002f, camera_speed = 0.005f,
+                 last_frame = 0.f, delta_time = 0.f;
+  static GLdouble yaw = -90.0, pitch = 0.0, mouse_sensitivity = .1;
+  static glm::vec3 camera_pos(0.f, 0.f, 3.f), camera_front(0.f, 0.f, -1.f),
+                   camera_up(0.f, 1.f, 0.f), world_up(0.f, 1.f, 0.f);
+  static glm::vec2 mouse_pos(400., 300.);
   static GLuint visibility_loc;
+  static Camera *camera = NULL;
 }
 
 int r_draw_boxes(GLFWwindow *window)
@@ -22,13 +33,9 @@ int r_draw_boxes(GLFWwindow *window)
 
   glfwGetWindowSize(window, &w, &h);
   glEnable(GL_DEPTH_TEST);
-/*
-  glm::mat4 view_trans, projection_trans;
 
-  view_trans = glm::translate(view_trans, glm::vec3(0.f, 0.f, -3.f));
-  projection_trans = glm::perspective(glm::radians(45.f), (float)w / (float)h, .1f, 100.f);*/
-
-  
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetCursorPosCallback(window, mouse_cb);
 
   GLuint vao[1] = { 0 };
   glGenVertexArrays(1, vao);
@@ -67,11 +74,14 @@ int r_draw_boxes(GLFWwindow *window)
   GLuint view_trans_loc = glGetUniformLocation(shader_programme, "view");
   GLuint projection_trans_loc = glGetUniformLocation(shader_programme, "projection");
 
+  params::camera = new Camera(params::camera_pos, params::camera_front, params::world_up);
+
   float last_time = 0.f;
 
   while (!glfwWindowShouldClose(window))
   {
     r_update_fps_counter(window);
+    update_delta();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -86,7 +96,8 @@ int r_draw_boxes(GLFWwindow *window)
     z = cos(p)*radius;
     //view_trans = glm::translate(glm::mat4(), glm::vec3(0.f, 0.f, -3.f));
     //view_trans = glm::lookAt(glm::vec3(x, 0.f, z), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
-    view_trans = glm::lookAt(params::camera_pos, params::camera_front, params::camera_up);
+    //view_trans = glm::lookAt(params::camera_pos, params::camera_front, params::camera_up);
+    view_trans = params::camera->get_view();
     projection_trans = glm::perspective(glm::radians(45.f*params::param), (float)w / (float)h, .1f, 100.f);
 
     glUniformMatrix4fv(view_trans_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
@@ -122,6 +133,15 @@ int r_draw_boxes(GLFWwindow *window)
   return R_SUCCESS;
 }
 
+void update_delta()
+{
+  GLfloat curr_time = glfwGetTime();
+  params::delta_time = curr_time - params::last_frame;
+  params::last_frame = curr_time;
+
+  params::camera_speed = 2.5f * params::delta_time;
+}
+
 void process_input(GLFWwindow *window)
 {
   if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE) ||
@@ -139,30 +159,93 @@ void process_input(GLFWwindow *window)
   }
 
   if (int key_r = glfwGetKey(window, GLFW_KEY_RIGHT),
-    key_l = glfwGetKey(window, GLFW_KEY_LEFT);
-    GLFW_PRESS == key_r || GLFW_PRESS == key_l)
+      key_l = glfwGetKey(window, GLFW_KEY_LEFT);
+      GLFW_PRESS == key_r || GLFW_PRESS == key_l)
   {
     int dir = (key_r == GLFW_PRESS) ? 1 : -1;
     params::param += (params::param_speed * dir);
   }
 
-  float dirY = params::camera_pos.y > 0 ? 1 : -1;
-  glm::vec3 forward = glm::normalize(params::camera_front - params::camera_pos);
-  glm::vec3 right = glm::normalize(glm::cross(forward, params::camera_up));
-  glm::vec3 up = glm::normalize(glm::cross(right, forward));
+  if (int key_u = glfwGetKey(window, GLFW_KEY_W),
+      key_d = glfwGetKey(window, GLFW_KEY_S);
+      GLFW_PRESS == key_u || GLFW_PRESS == key_d)
+  {
+    int dir = (key_u == GLFW_PRESS) ? 1 : -1;
+    params::camera->step_forward(dir);
+  }
 
-  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    params::camera_pos -= params::camera_speed * forward;
-  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-    params::camera_pos += params::camera_speed * forward;
-  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    params::camera_pos -= right * params::camera_speed;
-  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    params::camera_pos += right * params::camera_speed;
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    params::camera_pos -= up * params::camera_speed;
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    params::camera_pos += up * params::camera_speed;
+  if (int key_r = glfwGetKey(window, GLFW_KEY_D),
+      key_l = glfwGetKey(window, GLFW_KEY_A);
+      GLFW_PRESS == key_r || GLFW_PRESS == key_l)
+  {
+    int dir = (key_r == GLFW_PRESS) ? 1 : -1;
+    params::camera->step_right(dir);
+  }
+
+  /*glm::vec3 forward = glm::normalize(params::camera_front - params::camera_pos);
+  glm::vec3 right = glm::normalize(glm::cross(forward, params::camera_up));
+  glm::vec3 up = glm::normalize(glm::cross(right, forward));*/
+
+  //if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+  //  params::camera->increase_pos(forward);
+  //if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+  //  params::camera->increase_pos(forward);
+  //if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+  //  params::camera->increase_pos(-right);
+  //  /*params::camera_pos -= right * params::camera_speed;*/
+  //if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+  //  params::camera->increase_pos(right);
+  //if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+  //  params::camera->increase_pos(-up);
+  //if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+  //  params::camera->increase_pos(up);
+}
+
+void mouse_cb(GLFWwindow *window, double xpos, double ypos)
+{
+  params::camera->set_cursor(xpos, ypos);
+  //static bool first_mouse = true;
+
+  //if (first_mouse)
+  //{
+  //  params::mouse_pos.x = xpos;
+  //  params::mouse_pos.y = ypos;
+  //  first_mouse = false;
+  //}
+
+  //double xoff = xpos - params::mouse_pos.x;
+  //double yoff = ypos - params::mouse_pos.y;
+
+  //params::mouse_pos.x = xpos;
+  //params::mouse_pos.y = ypos;
+
+  ///*xoff *= params::mouse_sensitivity;
+  //yoff *= params::mouse_sensitivity;*/
+  ///*cout << "yoff:" << yoff << endl;
+  //cout << "ypos:" << ypos << endl;*/
+
+  //params::camera->increase_pitch(yoff);
+  //params::camera->increase_yaw(xoff);
+
+  /**params::yaw = glm::mod(params::yaw + xoff, 360.);
+  //params::yaw += xoff;
+  params::pitch -= yoff;
+
+  if (params::pitch > 89.)
+    params::pitch = 89.;
+  else if (params::pitch < -89.)
+    params::pitch = -89.;
+
+  glm::vec3 front(0., 0., 0.);
+  front.x = cos(glm::radians(params::yaw)) * cos(glm::radians(params::pitch));
+  std::cout << "front.x:" << front.x << ", yaw:" << params::yaw <<
+               ", pitch:" << params::pitch << std::endl << ", cos(yaw):" << cos(glm::radians(params::yaw)) <<
+               ", cos(pitch)" << cos(glm::radians(params::pitch)) << std::endl << std::endl;
+  front.y = sin(glm::radians(params::pitch));
+  front.z = sin(glm::radians(params::yaw)) * cos(glm::radians(params::pitch));
+  params::camera_front = glm::normalize(front);
+  glm::vec3 camera_right = glm::normalize(glm::cross(params::camera_front, params::world_up));
+  params::camera_up = glm::normalize(glm::cross(camera_right, params::camera_front));*/
 }
 
 int r_draw_texture_box(GLFWwindow *window)
