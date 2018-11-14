@@ -17,10 +17,10 @@ static void mouse_scroll_cb(GLFWwindow *window, double xoff, double yoff);
 
 namespace params
 {
-  static GLfloat visibility_val = 0.2f, speed = 0.0002f,
+  static GLfloat visibility_val = 0.f, speed = 0.002f,
                  last_frame = 0.f, delta_time = 0.f;
   static glm::vec3 camera_pos(0.f, 0.f, 3.f), camera_front(0.f, 0.f, -1.f),
-                   world_up(0.f, 1.f, 0.f);]
+                   world_up(0.f, 1.f, 0.f);
   static GLuint visibility_loc;
   static Camera *camera = NULL;
 }
@@ -56,8 +56,8 @@ int r_draw_boxes(GLFWwindow *window)
   GLint result = GL_TRUE;
   vector<GLchar> msg;
 
-  GLuint texture1 = load_texture("container.jpg", result, msg, false);
-  GLuint texture2 = load_texture("awesomeface.png", result, msg, true);
+  GLuint texture1 = load_texture("nell_normal.jpg", result, msg, false);
+  GLuint texture2 = load_texture("nell_haunted.jpg", result, msg, false);
 
   r_handle_result(result, msg);
 

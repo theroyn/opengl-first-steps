@@ -182,8 +182,10 @@
     <None Include="yellow_fragment_shader.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="nell_haunted.jpg" />
     <Image Include="awesomeface.png" />
     <Image Include="container.jpg" />
+    <Image Include="nell_normal.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

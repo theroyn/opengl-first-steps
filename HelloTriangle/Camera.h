@@ -22,7 +22,7 @@ public:
   void set_cursor(double x, double y);
   void process_keyboard_input(GLFWwindow *window);
   void reset_zoom();
-  float get_fov();
+  float get_fov() const;
   void zoom(double y_off);
 
 private:
@@ -31,6 +31,7 @@ private:
   void offset_angles(double xoff, double yoff);
   void step_forward(int dir);
   void step_right(int dir);
+  glm::mat4 get_lookat() const;
 
 private:
   double pitch_, yaw_;

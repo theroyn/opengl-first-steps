@@ -87,7 +87,7 @@ void Camera::reset_zoom()
   fov_ = DEFAULT_ZOOM;
 }
 
-float Camera::get_fov()
+float Camera::get_fov() const
 {
   float fov = glm::radians(fov_);
 
@@ -109,9 +109,36 @@ void Camera::update_view()
 
 glm::mat4 Camera::get_view() const
 {
-  glm::mat4 view = glm::lookAt(pos_, pos_ + front_, up_);
+  //glm::mat4 view = glm::lookAt(pos_, pos_ + front_, up_);
+  glm::mat4 view = get_lookat();
 
   return view;
+}
+
+glm::mat4 Camera::get_lookat() const
+{
+  glm::mat4 lookat(1.);
+
+  glm::vec3 f = glm::normalize(front_);
+
+  glm::vec3 r = glm::normalize(glm::cross(f, up_));
+  glm::vec3 u = glm::cross(r, f);
+  const glm::vec3 &p = pos_;
+
+  lookat[0][0] = r.x;
+  lookat[1][0] = r.y;
+  lookat[2][0] = r.z;
+  lookat[0][1] = u.x;
+  lookat[1][1] = u.y;
+  lookat[2][1] = u.z;
+  lookat[0][2] = -f.x;
+  lookat[1][2] = -f.y;
+  lookat[2][2] = -f.z;
+  lookat[3][0] = -glm::dot(r, p);
+  lookat[3][1] = -glm::dot(u, p);
+  lookat[3][2] = glm::dot(f, p);
+
+  return lookat;
 }
 
 void Camera::set_cursor(double x, double y)
