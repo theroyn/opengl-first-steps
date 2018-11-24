@@ -11,16 +11,12 @@
 #include "Camera.h"
 
 void process_input(GLFWwindow *window);
-void update_delta();
 static void mouse_drag_cb(GLFWwindow *window, double xpos, double ypos);
 static void mouse_scroll_cb(GLFWwindow *window, double xoff, double yoff);
 
 namespace params
 {
-  static GLfloat visibility_val = 0.f, speed = 0.002f,
-                 last_frame = 0.f, delta_time = 0.f;
-  static glm::vec3 camera_pos(0.f, 0.f, 3.f), camera_front(0.f, 0.f, -1.f),
-                   world_up(0.f, 1.f, 0.f);
+  static GLfloat visibility_val = 0.f, visibility_speed = 0.002f;
   static GLuint visibility_loc;
   static Camera *camera = NULL;
 }
@@ -28,22 +24,22 @@ namespace params
 /** ========================================================================= */
 int r_draw_boxes(GLFWwindow *window)
 /** ========================================================================= */
-{
-  int w, h;
+{/*
+  int w = 0, h = 0;
 
-  glfwGetWindowSize(window, &w, &h);
+  glfwGetWindowSize(window, &w, &h);*/
   glEnable(GL_DEPTH_TEST); 
 
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window, mouse_drag_cb);
   glfwSetScrollCallback(window, mouse_scroll_cb);
 
-  GLuint vao[1] = { 0 };
-  glGenVertexArrays(1, vao);
+  GLuint vao[] = { 0 };
+  glGenVertexArrays(sizeof(vao) / sizeof(vao[0]), vao);
   glBindVertexArray(vao[0]);
 
-  GLuint vbo[1] = { 0 };
-  glGenBuffers(1, vbo);
+  GLuint vbo[] = { 0 };
+  glGenBuffers(sizeof(vbo) / sizeof(vbo[0]), vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(cube_coords), cube_coords, GL_STATIC_DRAW);
 
@@ -75,26 +71,26 @@ int r_draw_boxes(GLFWwindow *window)
   GLuint view_trans_loc = glGetUniformLocation(shader_programme, "view");
   GLuint projection_trans_loc = glGetUniformLocation(shader_programme, "projection");
 
-  params::camera = new Camera(params::camera_pos, params::camera_front, params::world_up);
+  glm::vec3 camera_pos(0.f, 0.f, 3.f);
+  glm::vec3 camera_front(0.f, 0.f, -1.f);
+  glm::vec3 world_up(0.f, 1.f, 0.f);
+  params::camera = new Camera(window, camera_pos, camera_front, world_up);
 
   float last_time = 0.f;
 
   while (!glfwWindowShouldClose(window))
   {
     r_update_fps_counter(window);
-    update_delta();
+   params::camera->update_time_deltas();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     GLfloat p = glfwGetTime();
 
     glm::mat4 view_trans, projection_trans;
-    float x=0.f, z=3.f;
-    static float radius = 10.f;
-    x = sin(p)*radius;
-    z = cos(p)*radius;
+
     view_trans = params::camera->get_view();
-    projection_trans = glm::perspective(params::camera->get_fov(), ( float )w / ( float )h, .1f, 100.f);
+    projection_trans = params::camera->get_projection();
 
     glUniformMatrix4fv(view_trans_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
     glUniformMatrix4fv(projection_trans_loc, 1, GL_FALSE, glm::value_ptr(projection_trans));
@@ -129,18 +125,6 @@ int r_draw_boxes(GLFWwindow *window)
 }
 
 /** ========================================================================= */
-void update_delta()
-/** ========================================================================= */
-{
-  GLfloat curr_time = glfwGetTime();
-  params::delta_time = curr_time - params::last_frame;
-  params::last_frame = curr_time;
-
-  // todo use this!!
-  //params::camera_speed = 2.5f * params::delta_time;
-}
-
-/** ========================================================================= */
 void process_input(GLFWwindow *window)
 /** ========================================================================= */
 {
@@ -153,16 +137,12 @@ void process_input(GLFWwindow *window)
     GLFW_PRESS == key_u || GLFW_PRESS == key_d)
   {
     int dir = (key_u == GLFW_PRESS) ? 1 : -1;
-    params::visibility_val += (params::speed * dir);
+    params::visibility_val += (params::visibility_speed * dir);
     params::visibility_val = clamp(params::visibility_val, 0.f, 1.f);
     glUniform1f(params::visibility_loc, params::visibility_val);
   }
   
-  if (int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
-      state == GLFW_PRESS)
-    params::camera->reset_zoom();
-
-  params::camera->process_keyboard_input(window);
+  params::camera->process_keyboard_input();
 }
 
 void mouse_drag_cb(GLFWwindow * /** Ignore */, double xpos, double ypos)

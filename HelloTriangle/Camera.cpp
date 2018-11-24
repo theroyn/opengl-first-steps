@@ -4,23 +4,31 @@
 
 using namespace std;
 
-Camera::Camera(const glm::vec3 &pos,
+Camera::Camera(GLFWwindow *window,
+               const glm::vec3 &pos,
                const glm::vec3 &front,
                const glm::vec3 &world_up) :
+  window_(window),
   pos_(std::move(pos)),
   orig_front_(std::move(front)),
   world_up_(std::move(world_up)),
   pitch_(0.),
   yaw_(0.),
   cursor_(0., 0.),
-  zoom_speed_(3.f),
   fov_(DEFAULT_ZOOM),
-  translation_speed_(0.005f),
-  spin_speed_(.1f),
+  zoom_speed_base_(400.f),
+  translation_speed_base_(1.5f),
+  spin_speed_base_(3.f),
   is_cursor_init_(false)
 {
   up_ = world_up_;
   front_ = orig_front_;
+
+  spin_speed_ = spin_speed_base_;
+  zoom_speed_ = zoom_speed_base_;
+  translation_speed_ = translation_speed_base_;
+
+  glfwGetWindowSize(window_, &screen_w_, &screen_h_);
 }
 
 
@@ -53,23 +61,30 @@ void Camera::increase_pos(const glm::vec3 &pos)
   pos_ += translation_speed_ * pos;
 }
 
-void Camera::process_keyboard_input(GLFWwindow *window)
+void Camera::process_keyboard_input()
 {
-  if (int key_u = glfwGetKey(window, GLFW_KEY_W),
-      key_d = glfwGetKey(window, GLFW_KEY_S);
+  // Move forward/backward.
+  if (int key_u = glfwGetKey(window_, GLFW_KEY_W),
+      key_d = glfwGetKey(window_, GLFW_KEY_S);
       GLFW_PRESS == key_u || GLFW_PRESS == key_d)
   {
     int dir = (key_u == GLFW_PRESS) ? 1 : -1;
     step_forward(dir);
   }
 
-  if (int key_r = glfwGetKey(window, GLFW_KEY_D),
-      key_l = glfwGetKey(window, GLFW_KEY_A);
+  // Move right/left.
+  if (int key_r = glfwGetKey(window_, GLFW_KEY_D),
+      key_l = glfwGetKey(window_, GLFW_KEY_A);
       GLFW_PRESS == key_r || GLFW_PRESS == key_l)
   {
     int dir = (key_r == GLFW_PRESS) ? 1 : -1;
     step_right(dir);
   }
+
+  // Reset zoom on MMB.
+  if (int state = glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_MIDDLE);
+      state == GLFW_PRESS)
+    reset_zoom();
 }
 
 void Camera::zoom(double y_off)
@@ -113,6 +128,22 @@ glm::mat4 Camera::get_view() const
   glm::mat4 view = get_lookat();
 
   return view;
+}
+
+glm::mat4 Camera::get_projection() const
+{
+  GLfloat p = glfwGetTime();
+  float x = 0.f, z = 0.f;
+  static float radius = 10.f;
+
+  x = sin(p)*radius;
+  z = cos(p)*radius;
+
+  glm::mat4 projection = glm::perspective(get_fov(),
+                                          (float)screen_w_ / (float)screen_h_,
+                                          .1f, 100.f);
+
+  return projection;
 }
 
 glm::mat4 Camera::get_lookat() const
@@ -192,4 +223,16 @@ void Camera::increase_yaw(double off)
   yaw_ -= spin_speed_ * off;
 
   update_view();
+}
+
+
+void Camera::update_time_deltas()
+{
+  GLfloat curr_time = glfwGetTime();
+  delta_time_ = curr_time - last_frame_;
+  last_frame_ = curr_time;
+
+  spin_speed_ = spin_speed_base_ * 2.5f * delta_time_;
+  translation_speed_ = translation_speed_base_ * 2.5f * delta_time_;
+  zoom_speed_ = zoom_speed_base_*2.5f * delta_time_;
 }
