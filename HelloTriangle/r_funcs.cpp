@@ -11,6 +11,7 @@
 #include "Camera.h"
 
 void process_input(GLFWwindow *window);
+static void update_visibility(GLFWwindow *window);
 static void mouse_drag_cb(GLFWwindow *window, double xpos, double ypos);
 static void mouse_scroll_cb(GLFWwindow *window, double xoff, double yoff);
 
@@ -22,12 +23,134 @@ namespace params
 }
 
 /** ========================================================================= */
+int r_draw_light(GLFWwindow *window)
+/** ========================================================================= */
+{
+  glEnable(GL_DEPTH_TEST);
+
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetCursorPosCallback(window, mouse_drag_cb);
+  glfwSetScrollCallback(window, mouse_scroll_cb);
+
+
+  GLuint vbo[] = { 0 };
+  glGenBuffers(sizeof(vbo) / sizeof(vbo[0]), vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_coords_w_normals), cube_coords_w_normals, GL_STATIC_DRAW);
+
+
+  GLuint vao[] = { 0, 0 };
+  glGenVertexArrays(sizeof(vao) / sizeof(vao[0]), vao);
+
+  glBindVertexArray(vao[0]);
+
+  // Cube vertices.
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast< void * >(0));
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast< void * >(3 * sizeof(GLfloat)));
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(vao[1]);
+
+  // Lamp vertices.
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast< void * >(0));
+  glEnableVertexAttribArray(0);
+
+  GLint result = GL_TRUE;
+  vector<GLchar> msg;
+
+  GLuint box_shader = load_program("light_box_vs.glsl", "light_box_fs.glsl", result, msg);
+
+  r_handle_result(result, msg);
+
+  GLuint lamp_shader = load_program("lamp_shader_vs.glsl", "lamp_shader_fs.glsl", result, msg);
+
+  r_handle_result(result, msg);
+
+  glUseProgram(box_shader);
+
+  GLuint box_model_loc = glGetUniformLocation(box_shader, "model");
+  GLuint box_view_loc = glGetUniformLocation(box_shader, "view");
+  GLuint box_projection_loc = glGetUniformLocation(box_shader, "projection");
+  GLuint object_colour_loc = glGetUniformLocation(box_shader, "object_colour");
+  GLuint light_colour_loc = glGetUniformLocation(box_shader, "light_colour");
+  GLuint light_pos_loc = glGetUniformLocation(box_shader, "light_pos");
+
+  glUseProgram(lamp_shader);
+
+  GLuint lamp_model_loc = glGetUniformLocation(lamp_shader, "model");
+  GLuint lamp_view_loc = glGetUniformLocation(lamp_shader, "view");
+  GLuint lamp_projection_loc = glGetUniformLocation(lamp_shader, "projection");
+
+  glm::vec3 camera_pos(0.f, 0.f, 5.f);
+  glm::vec3 camera_front(0.f, 0.f, -1.f);
+  glm::vec3 world_up(0.f, 1.f, 0.f);
+  params::camera = new Camera(window, camera_pos, camera_front, world_up);
+
+  glm::vec3 lamp_pos(1.2f, 1.f, 2.f);
+  glm::vec3 light_colour(1.f);
+  glm::vec3 object_colour(1.f, .5f, .31f);
+
+  glUseProgram(box_shader);
+  glBindVertexArray(vao[0]);
+
+  glUniform3fv(light_pos_loc, 1, glm::value_ptr(lamp_pos));
+
+  while (!glfwWindowShouldClose(window))
+  {
+    r_update_fps_counter(window);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glm::mat4 view_trans, projection_trans;
+
+    view_trans = params::camera->get_view();
+    projection_trans = params::camera->get_projection();
+
+    // Draw box.
+    glUseProgram(box_shader);
+    glBindVertexArray(vao[0]);
+
+    glUniformMatrix4fv(box_view_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
+    glUniformMatrix4fv(box_projection_loc, 1, GL_FALSE, glm::value_ptr(projection_trans));
+
+    glm::mat4 model_trans = glm::translate(glm::mat4(), cube_positions[0]);
+
+    glUniformMatrix4fv(box_model_loc, 1, GL_FALSE, glm::value_ptr(model_trans));
+
+    glUniform3fv(object_colour_loc, 1, glm::value_ptr(object_colour));
+    glUniform3fv(light_colour_loc, 1, glm::value_ptr(light_colour));
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // Draw lamp.
+    glUseProgram(lamp_shader);
+    glBindVertexArray(vao[1]);
+
+    glUniformMatrix4fv(lamp_view_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
+    glUniformMatrix4fv(lamp_projection_loc, 1, GL_FALSE, glm::value_ptr(projection_trans));
+
+    model_trans = glm::translate(glm::mat4(), lamp_pos);
+    model_trans = glm::scale(model_trans, glm::vec3(0.2f));
+
+    glUniformMatrix4fv(lamp_model_loc, 1, GL_FALSE, glm::value_ptr(model_trans));
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+
+    params::camera->update_time_deltas();
+    process_input(window);
+  }
+
+  return R_SUCCESS;
+}
+
+/** ========================================================================= */
 int r_draw_boxes(GLFWwindow *window)
 /** ========================================================================= */
-{/*
-  int w = 0, h = 0;
-
-  glfwGetWindowSize(window, &w, &h);*/
+{
   glEnable(GL_DEPTH_TEST); 
 
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -41,7 +164,7 @@ int r_draw_boxes(GLFWwindow *window)
   GLuint vbo[] = { 0 };
   glGenBuffers(sizeof(vbo) / sizeof(vbo[0]), vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_coords), cube_coords, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_coords_w_textures), cube_coords_w_textures, GL_STATIC_DRAW);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
@@ -76,12 +199,9 @@ int r_draw_boxes(GLFWwindow *window)
   glm::vec3 world_up(0.f, 1.f, 0.f);
   params::camera = new Camera(window, camera_pos, camera_front, world_up);
 
-  float last_time = 0.f;
-
   while (!glfwWindowShouldClose(window))
   {
     r_update_fps_counter(window);
-   params::camera->update_time_deltas();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -118,7 +238,9 @@ int r_draw_boxes(GLFWwindow *window)
     glfwSwapBuffers(window);
     glfwPollEvents();
 
-    process_input(window);    
+    params::camera->update_time_deltas();
+    process_input(window);
+    update_visibility(window);
   }
 
   return R_SUCCESS;
@@ -132,17 +254,22 @@ void process_input(GLFWwindow *window)
     GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ENTER))
     glfwSetWindowShouldClose(window, GL_TRUE);
 
+  
+  
+  params::camera->process_keyboard_input();
+}
+
+void update_visibility(GLFWwindow *window)
+{
   if (int key_u = glfwGetKey(window, GLFW_KEY_UP),
-    key_d = glfwGetKey(window, GLFW_KEY_DOWN);
-    GLFW_PRESS == key_u || GLFW_PRESS == key_d)
+      key_d = glfwGetKey(window, GLFW_KEY_DOWN);
+      GLFW_PRESS == key_u || GLFW_PRESS == key_d)
   {
     int dir = (key_u == GLFW_PRESS) ? 1 : -1;
     params::visibility_val += (params::visibility_speed * dir);
     params::visibility_val = clamp(params::visibility_val, 0.f, 1.f);
     glUniform1f(params::visibility_loc, params::visibility_val);
   }
-  
-  params::camera->process_keyboard_input();
 }
 
 void mouse_drag_cb(GLFWwindow * /** Ignore */, double xpos, double ypos)

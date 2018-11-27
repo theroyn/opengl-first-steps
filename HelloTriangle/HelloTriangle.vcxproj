@@ -176,6 +176,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment_shader.glsl" />
+    <None Include="lamp_shader_fs.glsl" />
+    <None Include="lamp_shader_vs.glsl" />
+    <None Include="light_box_fs.glsl" />
+    <None Include="light_box_vs.glsl" />
     <None Include="texture_box_fs.glsl" />
     <None Include="texture_box_vs.glsl" />
     <None Include="vertex_shader.glsl" />

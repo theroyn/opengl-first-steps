@@ -167,10 +167,15 @@ int r_exit(int code, const string &msg)
 
   glfwTerminate();
 
-  cout << endl << "Press Enter to exit with code " << code << "..." << endl;
+#ifdef _DEBUG
+  if (code != 0)
+  {
+    cout << endl << "Press Enter to exit with code " << code << "..." << endl;
 
-  /**cin.clear();
-  cin.get();*/
+    cin.clear();
+    cin.get();
+  }
+#endif // DEBUG
 
 
   return code;

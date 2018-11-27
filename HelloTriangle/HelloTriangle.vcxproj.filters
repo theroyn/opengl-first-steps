@@ -67,6 +67,18 @@
     <None Include="texture_box_fs.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="light_box_vs.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="lamp_shader_fs.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="lamp_shader_vs.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="light_box_fs.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="container.jpg">
