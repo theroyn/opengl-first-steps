@@ -75,26 +75,27 @@ int r_draw_light(GLFWwindow *window)
   GLuint object_colour_loc = glGetUniformLocation(box_shader, "object_colour");
   GLuint light_colour_loc = glGetUniformLocation(box_shader, "light_colour");
   GLuint light_pos_loc = glGetUniformLocation(box_shader, "light_pos");
+  GLuint eye_model_pos_loc = glGetUniformLocation(box_shader, "eye_model_pos");
 
   glUseProgram(lamp_shader);
 
   GLuint lamp_model_loc = glGetUniformLocation(lamp_shader, "model");
   GLuint lamp_view_loc = glGetUniformLocation(lamp_shader, "view");
   GLuint lamp_projection_loc = glGetUniformLocation(lamp_shader, "projection");
+  //GLuint lamp_alpha_loc = glGetUniformLocation(lamp_shader, "alpha");
 
   glm::vec3 camera_pos(0.f, 0.f, 5.f);
   glm::vec3 camera_front(0.f, 0.f, -1.f);
   glm::vec3 world_up(0.f, 1.f, 0.f);
   params::camera = new Camera(window, camera_pos, camera_front, world_up);
 
-  glm::vec3 lamp_pos(1.2f, 1.f, 2.f);
+  glm::vec3 lamp_pos(.2f, .5f, 2.f);
   glm::vec3 light_colour(1.f);
   glm::vec3 object_colour(1.f, .5f, .31f);
 
-  glUseProgram(box_shader);
-  glBindVertexArray(vao[0]);
+  /*glUseProgram(box_shader);
+  glBindVertexArray(vao[0]);*/
 
-  glUniform3fv(light_pos_loc, 1, glm::value_ptr(lamp_pos));
 
   while (!glfwWindowShouldClose(window))
   {
@@ -103,6 +104,7 @@ int r_draw_light(GLFWwindow *window)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glm::mat4 view_trans, projection_trans;
+    GLfloat alpha = 0.001*sin(glfwGetTime() * 2);
 
     view_trans = params::camera->get_view();
     projection_trans = params::camera->get_projection();
@@ -111,6 +113,9 @@ int r_draw_light(GLFWwindow *window)
     glUseProgram(box_shader);
     glBindVertexArray(vao[0]);
 
+    lamp_pos += alpha;
+    glUniform3fv(light_pos_loc, 1, glm::value_ptr(lamp_pos));
+    glUniform3fv(eye_model_pos_loc, 1, glm::value_ptr(params::camera->get_pos()));
     glUniformMatrix4fv(box_view_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
     glUniformMatrix4fv(box_projection_loc, 1, GL_FALSE, glm::value_ptr(projection_trans));
 
@@ -127,6 +132,7 @@ int r_draw_light(GLFWwindow *window)
     glUseProgram(lamp_shader);
     glBindVertexArray(vao[1]);
 
+    //glUniform1f(lamp_alpha_loc, alpha);
     glUniformMatrix4fv(lamp_view_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
     glUniformMatrix4fv(lamp_projection_loc, 1, GL_FALSE, glm::value_ptr(projection_trans));
 

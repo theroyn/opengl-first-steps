@@ -146,6 +146,12 @@ glm::mat4 Camera::get_projection() const
   return projection;
 }
 
+glm::vec3 Camera::get_pos() const
+{
+
+  return pos_;
+}
+
 glm::mat4 Camera::get_lookat() const
 {
   glm::mat4 lookat(1.);

@@ -19,6 +19,7 @@ public:
 public:
   glm::mat4 get_view() const;
   glm::mat4 get_projection() const;
+  glm::vec3 get_pos() const;
   void increase_pos(const glm::vec3 &pos);
   void update_view();
   void set_cursor(double x, double y);
