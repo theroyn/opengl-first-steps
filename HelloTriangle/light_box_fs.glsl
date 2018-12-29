@@ -1,5 +1,20 @@
 #version 400
 
+struct Material
+{
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  int shininess;
+};
+
+struct Light
+{
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+};
+
 // Model oriented
 in vec3 frag_normal;
 in vec3 frag_model_pos;
@@ -10,28 +25,28 @@ in vec3 frag_view_pos;
 
 out vec4 frag_colour;
 
-uniform vec3 object_colour;
-uniform vec3 light_colour;
 uniform vec3 light_pos;
 uniform vec3 light_view_pos;
 
+uniform Material material;
+uniform Light light;
+
 void main()
 {
-  float ambient_strength = 0.15;
-  vec3 ambient = ambient_strength * light_colour;
+  vec3 ambient = material.ambient * light.ambient;
 
 
-  vec3 v_light_dir = normalize(light_view_pos - frag_view_pos);
-  vec3 v_norm = normalize(frag_view_normal);
-  float v_diffuse_strength = max(dot(v_norm, v_light_dir), 0);
-  vec3 diffuse = v_diffuse_strength * light_colour;
+  vec3 light_dir = normalize(light_view_pos - frag_view_pos);
+  vec3 norm = normalize(frag_view_normal);
+  float diffuse_strength = max(dot(norm, light_dir), 0);
+  vec3 diffuse = material.diffuse * diffuse_strength * light.diffuse;
   
-  vec3 v_r = -v_light_dir + ((2 * dot(v_light_dir, v_norm)) * v_norm);
-  vec3 v_eye_dir = -normalize(frag_view_pos);
-  float v_specular_strength = pow(max(dot(v_r, v_eye_dir), 0.f), 64);
-  vec3 specular = 1*v_specular_strength * light_colour;
+  vec3 r = -light_dir + ((2 * dot(light_dir, norm)) * norm);
+  vec3 eye_dir = -normalize(frag_view_pos);
+  float spec = pow(max(dot(r, eye_dir), 0.f), material.shininess);
+  vec3 specular = material.specular * spec * light.specular;
 
-  vec3 result = (specular + diffuse + ambient) * object_colour;
+  vec3 result = specular + diffuse + ambient;
 
   frag_colour = vec4(result, 1.0);
 }

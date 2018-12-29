@@ -12,6 +12,7 @@
 
 
 using namespace std;
+//using namespace utility;
 
 string readFile(const char *file_path)
 {
@@ -35,7 +36,7 @@ string readFile(const char *file_path)
   return content;
 }
 
-GLuint load_texture(const char *path, GLint &result, vector<GLchar> &msg, bool has_alpha)
+GLuint utility::load_texture(const char *path, GLint &result, vector<GLchar> &msg, bool has_alpha)
 {
   GLuint texture = 0;
   int w = 0, h = 0, nc = 0;
@@ -71,7 +72,7 @@ GLuint load_texture(const char *path, GLint &result, vector<GLchar> &msg, bool h
   return texture;
 }
 
-GLuint load_shader(const char *path, GLenum type, GLint &result, std::vector<GLchar> &msg)
+GLuint utility::load_shader(const char *path, GLenum type, GLint &result, std::vector<GLchar> &msg)
 {
   GLuint shader = glCreateShader(type);
   string shaderStr = readFile(path);
@@ -80,7 +81,7 @@ GLuint load_shader(const char *path, GLenum type, GLint &result, std::vector<GLc
   int logLength;
 
   // Compile vertex shader
-  dbg_print("Compiling shader.");
+  utility::dbg_print("Compiling shader.");
   glShaderSource(shader, 1, &shaderSrc, NULL);
   glCompileShader(shader);
 
@@ -94,13 +95,13 @@ GLuint load_shader(const char *path, GLenum type, GLint &result, std::vector<GLc
   }
   else
   {
-    dbg_print("Successful compilation.");
+    utility::dbg_print("Successful compilation.");
   }
 
   return shader;
 }
 
-GLuint load_program(GLuint vertShader, GLuint fragShader, GLint &result, std::vector<GLchar> &msg)
+GLuint utility::load_program(GLuint vertShader, GLuint fragShader, GLint &result, std::vector<GLchar> &msg)
 {
   GLuint program = glCreateProgram();
 
@@ -122,7 +123,7 @@ GLuint load_program(GLuint vertShader, GLuint fragShader, GLint &result, std::ve
 }
 
 
-GLuint load_program(const char *vertex_path, const char      *fragment_path,
+GLuint utility::load_program(const char *vertex_path, const char      *fragment_path,
                     GLint      &result,      vector<GLchar>  &msg,
                     GLuint     *vs,          GLuint          *fs)
 {
@@ -153,14 +154,14 @@ GLuint load_program(const char *vertex_path, const char      *fragment_path,
   return program;
 }
 
-void dbg_print(const string &msg)
+void utility::dbg_print(const string &msg)
 {
 #ifdef _DEBUG
   cout << "Debug Message:" << endl << msg << endl;
 #endif // DEBUG
 }
 
-int r_exit(int code, const string &msg)
+int utility::r_exit(int code, const string &msg)
 {
   if (!msg.empty())
     dbg_print(msg);
@@ -199,7 +200,7 @@ static void _update_fps_counter(GLFWwindow* window)
   frame_count++;
 }
 
-void r_update_fps_counter(GLFWwindow* window)
+void utility::r_update_fps_counter(GLFWwindow* window)
 {
 #ifdef _DEBUG
   _update_fps_counter(window);

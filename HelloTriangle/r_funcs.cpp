@@ -9,6 +9,8 @@
 #include <gtc/type_ptr.hpp>
 
 #include "Camera.h"
+#include "Shader.h"
+#include "PhongDispenser.h"
 
 void process_input(GLFWwindow *window);
 static void update_visibility(GLFWwindow *window);
@@ -26,6 +28,8 @@ namespace params
 int r_draw_light(GLFWwindow *window)
 /** ========================================================================= */
 {
+  using namespace std;
+
   glEnable(GL_DEPTH_TEST);
 
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -59,42 +63,51 @@ int r_draw_light(GLFWwindow *window)
   GLint result = GL_TRUE;
   vector<GLchar> msg;
 
-  GLuint box_shader = load_program("light_box_vs.glsl", "light_box_fs.glsl", result, msg);
+  Shader box_shader("light_box_vs.glsl", "light_box_fs.glsl");
 
-  r_handle_result(result, msg);
+  if (box_shader.error())
+    return box_shader.exit_error();
 
-  GLuint lamp_shader = load_program("lamp_shader_vs.glsl", "lamp_shader_fs.glsl", result, msg);
 
-  r_handle_result(result, msg);
+  Shader lamp_shader("lamp_shader_vs.glsl", "lamp_shader_fs.glsl");
 
-  glUseProgram(box_shader);
+  if (lamp_shader.error())
+    return lamp_shader.exit_error();
 
-  GLuint box_model_loc = glGetUniformLocation(box_shader, "model");
-  GLuint box_view_loc = glGetUniformLocation(box_shader, "view");
-  GLuint box_projection_loc = glGetUniformLocation(box_shader, "projection");
-  GLuint object_colour_loc = glGetUniformLocation(box_shader, "object_colour");
-  GLuint light_colour_loc = glGetUniformLocation(box_shader, "light_colour");
-  GLuint light_pos_loc = glGetUniformLocation(box_shader, "light_pos");
-  GLuint light_view_pos_loc = glGetUniformLocation(box_shader, "light_view_pos");
+  /*PhongDispenser box_dispenser(box_shader, true,
+                               glm::vec3(1.f, .5f, .31f),
+                               glm::vec3(1.f, .5f, .31f),
+                               glm::vec3(.5f, .5f, .5f),
+                               64);*/
 
-  glUseProgram(lamp_shader);
+  PhongDispenser box_dispenser(box_shader, materials[0]);
 
-  GLuint lamp_model_loc = glGetUniformLocation(lamp_shader, "model");
-  GLuint lamp_view_loc = glGetUniformLocation(lamp_shader, "view");
-  GLuint lamp_projection_loc = glGetUniformLocation(lamp_shader, "projection");
+  box_dispenser.dispense();
+
+ /* PhongDispenser light_dispenser(box_shader, false,
+                                 glm::vec3(.2f, .2f, .2f),
+                                 glm::vec3(.5f, .5f, .5f),
+                                 glm::vec3(1.f, 1.f, 1.f));*/
+  PhongDispenser light_dispenser(box_shader, false,
+                                 glm::vec3(1.f),
+                                 glm::vec3(1.f),
+                                 glm::vec3(1.f));
+
+  light_dispenser.dispense();
+
+  lamp_shader.use();
+
   glm::vec3 camera_pos(0.f, 0.f, 5.f);
   glm::vec3 camera_front(0.f, 0.f, -1.f);
   glm::vec3 world_up(0.f, 1.f, 0.f);
   params::camera = new Camera(window, camera_pos, camera_front, world_up);
 
   glm::vec3 lamp_pos(-1.f, 0.f, 1.f);
-  glm::vec3 light_colour(1.f);
-  glm::vec3 object_colour(1.f, .5f, .31f);
 
 
   while (!glfwWindowShouldClose(window))
   {
-    r_update_fps_counter(window);
+    utility::r_update_fps_counter(window);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -109,36 +122,34 @@ int r_draw_light(GLFWwindow *window)
     projection_trans = params::camera->get_projection();
 
     // Draw box.
-    glUseProgram(box_shader);
+    box_shader.use();
     glBindVertexArray(vao[0]);
 
     lamp_pos += circle_delt;
-    glUniform3fv(light_pos_loc, 1, glm::value_ptr(lamp_pos));
-    glUniform3fv(light_view_pos_loc, 1, glm::value_ptr(view_trans * glm::vec4(lamp_pos, 1.f)));
-    glUniformMatrix4fv(box_view_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
-    glUniformMatrix4fv(box_projection_loc, 1, GL_FALSE, glm::value_ptr(projection_trans));
+
+    box_shader.set_vec3("light_pos", lamp_pos);
+    box_shader.set_vec3("light_view_pos", view_trans * glm::vec4(lamp_pos, 1.f));
+    box_shader.set_mat4("view", view_trans);
+    box_shader.set_mat4("projection", projection_trans);
 
     glm::mat4 model_trans = glm::translate(glm::mat4(), cube_positions[0]);
 
-    glUniformMatrix4fv(box_model_loc, 1, GL_FALSE, glm::value_ptr(model_trans));
-
-    glUniform3fv(object_colour_loc, 1, glm::value_ptr(object_colour));
-    glUniform3fv(light_colour_loc, 1, glm::value_ptr(light_colour));
+    box_shader.set_mat4("model", model_trans);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     // Draw lamp.
-    glUseProgram(lamp_shader);
+    lamp_shader.use();
     glBindVertexArray(vao[1]);
 
     //glUniform1f(lamp_alpha_loc, alpha);
-    glUniformMatrix4fv(lamp_view_loc, 1, GL_FALSE, glm::value_ptr(view_trans));
-    glUniformMatrix4fv(lamp_projection_loc, 1, GL_FALSE, glm::value_ptr(projection_trans));
+    lamp_shader.set_mat4("view", view_trans);
+    lamp_shader.set_mat4("projection", projection_trans);
 
     model_trans = glm::translate(glm::mat4(), lamp_pos);
     model_trans = glm::scale(model_trans, glm::vec3(0.2f));
 
-    glUniformMatrix4fv(lamp_model_loc, 1, GL_FALSE, glm::value_ptr(model_trans));
+    lamp_shader.set_mat4("model", model_trans);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -151,6 +162,8 @@ int r_draw_light(GLFWwindow *window)
 
   return R_SUCCESS;
 }
+
+using namespace utility;
 
 /** ========================================================================= */
 int r_draw_boxes(GLFWwindow *window)

@@ -3,6 +3,29 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
+#include "PhongDispenser.h"
+
+static Material materials[] =
+{
+  { // 0: emerald
+    glm::vec3(0.0215, 0.1745, 0.0215),
+    glm::vec3(0.07568, 0.61424, 0.07568),
+    glm::vec3(0.633, 0.727811, 0.633),
+    64
+  },
+  { // 1: gold
+    glm::vec3(0.24725, 0.1995, 0.0745),
+    glm::vec3(0.75164, 0.60648, 0.22648),
+    glm::vec3(0.628281, 0.555802, 0.366065),
+    64
+  },
+  { // 2: silver
+    glm::vec3(0.19225, 0.19225, 0.19225),
+    glm::vec3(0.50754, 0.50754, 0.50754),
+    glm::vec3(0.508273, 0.508273, 0.508273),
+    64
+  }
+};
 
 float cube_coords_w_normals[] = 
 {

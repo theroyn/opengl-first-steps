@@ -158,8 +158,10 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="coords.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PhongDispenser.h" />
     <ClInclude Include="RUTIL.h" />
     <ClInclude Include="r_funcs.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
@@ -171,8 +173,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PhongDispenser.cpp" />
     <ClCompile Include="RUTIL.cpp" />
     <ClCompile Include="r_funcs.cpp" />
+    <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment_shader.glsl" />
