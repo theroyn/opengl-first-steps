@@ -83,3 +83,9 @@ void Shader::set_mat4(const std::string &name, const glm::mat4 &mat) const
 {
   glUniformMatrix4fv(glGetUniformLocation(program_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
+
+void Shader::set_tex(const std::string &name, const string &path, bool alpha) const
+{
+  GLuint texture = utility::load_texture(path.c_str(), result_, msg_, alpha);
+  error_ = !result_;
+}

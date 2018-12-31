@@ -105,5 +105,11 @@
     <Image Include="nell_normal.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="container2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="container2_specular.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

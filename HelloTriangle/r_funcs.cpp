@@ -40,7 +40,10 @@ int r_draw_light(GLFWwindow *window)
   GLuint vbo[] = { 0 };
   glGenBuffers(sizeof(vbo) / sizeof(vbo[0]), vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_coords_w_normals), cube_coords_w_normals, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER,
+               sizeof(cube_coords_w_normals_n_textures),
+               cube_coords_w_normals_n_textures,
+               GL_STATIC_DRAW);
 
 
   GLuint vao[] = { 0, 0 };
@@ -49,15 +52,28 @@ int r_draw_light(GLFWwindow *window)
   glBindVertexArray(vao[0]);
 
   // Cube vertices.
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast< void * >(0));
+  glVertexAttribPointer(0, 3,
+                        GL_FLOAT, GL_FALSE,
+                        8 * sizeof(GLfloat),
+                        reinterpret_cast< void * >(0));
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast< void * >(3 * sizeof(GLfloat)));
+  glVertexAttribPointer(1, 3,
+                        GL_FLOAT, GL_FALSE,
+                        8 * sizeof(GLfloat),
+                        reinterpret_cast< void * >(3 * sizeof(GLfloat)));
   glEnableVertexAttribArray(1);
+  glVertexAttribPointer(2, 2,
+                        GL_FLOAT, GL_FALSE,
+                        8 * sizeof(GLfloat),
+                        reinterpret_cast< void * >(6 * sizeof(GLfloat)));
+  glEnableVertexAttribArray(2);
 
   glBindVertexArray(vao[1]);
 
   // Lamp vertices.
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast< void * >(0));
+  glVertexAttribPointer(0, 3,
+                        GL_FLOAT, GL_FALSE,
+                        8 * sizeof(GLfloat), reinterpret_cast< void * >(0));
   glEnableVertexAttribArray(0);
 
   GLint result = GL_TRUE;
@@ -74,24 +90,28 @@ int r_draw_light(GLFWwindow *window)
   if (lamp_shader.error())
     return lamp_shader.exit_error();
 
-  /*PhongDispenser box_dispenser(box_shader, true,
-                               glm::vec3(1.f, .5f, .31f),
-                               glm::vec3(1.f, .5f, .31f),
-                               glm::vec3(.5f, .5f, .5f),
-                               64);*/
-
   PhongDispenser box_dispenser(box_shader, materials[0]);
 
   box_dispenser.dispense();
+  GLuint diffuse_map = utility::load_texture("container2.png", result, msg, true);
+  GLuint specular_map = utility::load_texture("container2_specular.png", result, msg, true);
+  box_shader.use();
+  box_shader.set_int("material.diffuse", 0);
+  box_shader.set_int("material.specular", 1);
 
- /* PhongDispenser light_dispenser(box_shader, false,
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, diffuse_map);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, specular_map);
+
+  PhongDispenser light_dispenser(box_shader, false,
                                  glm::vec3(.2f, .2f, .2f),
                                  glm::vec3(.5f, .5f, .5f),
-                                 glm::vec3(1.f, 1.f, 1.f));*/
-  PhongDispenser light_dispenser(box_shader, false,
+                                 glm::vec3(1.f, 1.f, 1.f));
+  /*PhongDispenser light_dispenser(box_shader, false,
                                  glm::vec3(1.f),
                                  glm::vec3(1.f),
-                                 glm::vec3(1.f));
+                                 glm::vec3(1.f));*/
 
   light_dispenser.dispense();
 

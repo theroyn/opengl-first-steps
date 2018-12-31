@@ -190,6 +190,8 @@
     <None Include="yellow_fragment_shader.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="container2.png" />
+    <Image Include="container2_specular.png" />
     <Image Include="nell_haunted.jpg" />
     <Image Include="awesomeface.png" />
     <Image Include="container.jpg" />

@@ -17,8 +17,8 @@ void PhongDispenser::dispense() const
   shader_.use();
 
   shader_.set_vec3(base + AMBIENT, ambient_);
-  shader_.set_vec3(base + DIFFUSE, diffuse_);
-  shader_.set_vec3(base + SPECULAR, specular_);
+  if (!is_material_) shader_.set_vec3(base + DIFFUSE, diffuse_);
+  if (!is_material_) shader_.set_vec3(base + SPECULAR, specular_);
 
   if (is_material_)
     shader_.set_int(base + SHININESS, shininess_);
