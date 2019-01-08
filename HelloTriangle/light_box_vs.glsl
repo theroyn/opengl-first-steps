@@ -10,7 +10,7 @@ out vec3 frag_model_pos;
 
 // View oriented
 out vec3 frag_view_normal;
-out vec3 frag_view_pos;
+out vec4 frag_view_pos;
 out vec2 frag_tex;
 
 uniform mat4 model;
@@ -25,6 +25,6 @@ void main()
 
   mat3 normal_matrix = transpose(inverse(mat3(view * model)));
   frag_view_normal = normal_matrix * in_normal;
-  frag_view_pos = vec3(view * model * vec4(pos, 1.0));
+  frag_view_pos = view * model * vec4(pos, 1.0);
   gl_Position = projection * view * model * vec4(frag_model_pos, 1.0);
 }

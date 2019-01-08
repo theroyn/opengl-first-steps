@@ -90,10 +90,17 @@ int r_draw_light(GLFWwindow *window)
   if (lamp_shader.error())
     return lamp_shader.exit_error();
 
-  PhongDispenser box_dispenser(box_shader, materials[0]);
+  MaterialDispenser box_dispenser(box_shader, "container2.png", "container2_specular.png");
 
   box_dispenser.dispense();
-  GLuint diffuse_map = utility::load_texture("container2.png", result, msg, true);
+
+  box_shader.use();
+  glActiveTexture(GL_TEXTURE2);
+  GLuint emission_map = utility::load_texture("matrix.jpg", result, msg);
+  box_shader.set_int("emission_map", 2);
+  glBindTexture(GL_TEXTURE_2D, emission_map);
+
+  /*GLuint diffuse_map = utility::load_texture("container2.png", result, msg, true);
   GLuint specular_map = utility::load_texture("container2_specular.png", result, msg, true);
   box_shader.use();
   box_shader.set_int("material.diffuse", 0);
@@ -102,12 +109,24 @@ int r_draw_light(GLFWwindow *window)
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, diffuse_map);
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, specular_map);
+  glBindTexture(GL_TEXTURE_2D, specular_map);*/
 
-  PhongDispenser light_dispenser(box_shader, false,
+  Light light =
+  {
+    glm::vec3(.2f, .2f, .2f),
+    glm::vec3(.5f, .5f, .5f),
+    glm::vec3(1.f, 1.f, 1.f),
+    1.f,
+    0.09f,
+    0.032f
+  };
+
+  LightDispenser light_dispenser(box_shader, light);
+
+  /*LightDispenser light_dispenser(box_shader,
                                  glm::vec3(.2f, .2f, .2f),
                                  glm::vec3(.5f, .5f, .5f),
-                                 glm::vec3(1.f, 1.f, 1.f));
+                                 glm::vec3(1.f, 1.f, 1.f));*/
   /*PhongDispenser light_dispenser(box_shader, false,
                                  glm::vec3(1.f),
                                  glm::vec3(1.f),
@@ -145,28 +164,44 @@ int r_draw_light(GLFWwindow *window)
     box_shader.use();
     glBindVertexArray(vao[0]);
 
-    lamp_pos += circle_delt;
+    lamp_pos;// += circle_delt;
 
-    box_shader.set_vec3("light_pos", lamp_pos);
-    box_shader.set_vec3("light_view_pos", view_trans * glm::vec4(lamp_pos, 1.f));
+    box_shader.set_vec4("light_view_vec", view_trans * glm::vec4(lamp_pos, 1.f));
     box_shader.set_mat4("view", view_trans);
     box_shader.set_mat4("projection", projection_trans);
 
-    glm::mat4 model_trans = glm::translate(glm::mat4(), cube_positions[0]);
+    //box_shader.set_float("time", 0.001*sin(p * 2));
+    box_shader.set_float("time", p);
 
-    box_shader.set_mat4("model", model_trans);
+    /*glm::mat4 model_trans = glm::translate(glm::mat4(), cube_positions[0]);
+    float angle = 20.0f * p;
 
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    model_trans = glm::rotate(model_trans, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));*/
+
+
+    for (int i = 0; i < 10; ++i)
+    {
+      static float start_p = glfwGetTime();
+      glm::mat4 model_trans = glm::translate(glm::mat4(), cube_positions[i]);
+      float angle = 20.0f * (i + 1) * p;
+
+      model_trans = glm::rotate(model_trans, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+      box_shader.set_mat4("model", model_trans);
+
+      glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
     // Draw lamp.
     lamp_shader.use();
     glBindVertexArray(vao[1]);
 
     //glUniform1f(lamp_alpha_loc, alpha);
+
     lamp_shader.set_mat4("view", view_trans);
     lamp_shader.set_mat4("projection", projection_trans);
 
-    model_trans = glm::translate(glm::mat4(), lamp_pos);
+    glm::mat4 model_trans = glm::translate(glm::mat4(), lamp_pos);
     model_trans = glm::scale(model_trans, glm::vec3(0.2f));
 
     lamp_shader.set_mat4("model", model_trans);
@@ -213,8 +248,8 @@ int r_draw_boxes(GLFWwindow *window)
   GLint result = GL_TRUE;
   vector<GLchar> msg;
 
-  GLuint texture1 = load_texture("nell_normal.jpg", result, msg, false);
-  GLuint texture2 = load_texture("nell_haunted.jpg", result, msg, false);
+  GLuint texture1 = load_texture("nell_normal.jpg", result, msg);
+  GLuint texture2 = load_texture("nell_haunted.jpg", result, msg);
 
   r_handle_result(result, msg);
 
@@ -372,8 +407,8 @@ int r_draw_texture_box(GLFWwindow *window)
   GLint result = GL_TRUE;
   vector<GLchar> msg;
 
-  GLuint texture1 = load_texture("container.jpg", result, msg, false);
-  GLuint texture2 = load_texture("awesomeface.png", result, msg, true);
+  GLuint texture1 = load_texture("container.jpg", result, msg);
+  GLuint texture2 = load_texture("awesomeface.png", result, msg);
 
   r_handle_result(result, msg);
     

@@ -26,7 +26,7 @@ namespace utility
                       GLint      &result, vector<GLchar> &msg,
                       GLuint     *vs = NULL, GLuint         *fs = NULL);
   GLuint load_shader(const char *path, GLenum type, GLint &result, vector<GLchar> &msg);
-  GLuint load_texture(const char *path, GLint &result, vector<GLchar> &msg, bool has_alpha = false);
+  GLuint load_texture(const char *path, GLint &result, vector<GLchar> &msg/*, bool has_alpha = false*/);
 
   void dbg_print(const string &msg);
   int r_exit(int code, const string &msg = "");

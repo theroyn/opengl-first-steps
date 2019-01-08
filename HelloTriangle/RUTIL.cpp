@@ -36,7 +36,7 @@ string readFile(const char *file_path)
   return content;
 }
 
-GLuint utility::load_texture(const char *path, GLint &result, vector<GLchar> &msg, bool has_alpha)
+GLuint utility::load_texture(const char *path, GLint &result, vector<GLchar> &msg/*, bool has_alpha*/)
 {
   GLuint texture = 0;
   int w = 0, h = 0, nc = 0;
@@ -63,7 +63,7 @@ GLuint utility::load_texture(const char *path, GLint &result, vector<GLchar> &ms
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, has_alpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, (nc == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     stbi_image_free(data);
