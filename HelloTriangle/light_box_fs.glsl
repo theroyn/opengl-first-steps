@@ -1,5 +1,7 @@
 #version 400
 
+#define LIGHT_SOURCES_N 4
+
 struct Material
 {
   vec3 ambient;
@@ -29,11 +31,12 @@ out vec4 frag_colour;
 uniform vec4 light_view_vec;
 
 uniform Material material;
-uniform Light light;
+uniform Light lights[LIGHT_SOURCES_N];
 uniform sampler2D emission_map;
 uniform float time;
 
-void main()
+void calculate_dir_light(Light light);
+vec3 calculate_point_light(Light light)
 {
   vec3 material_ambient_diffuse = texture(material.diffuse, frag_tex).rgb;
   vec3 material_specular = vec3(texture(material.specular, frag_tex));
@@ -66,7 +69,15 @@ void main()
   float spec = pow(max(dot(r, eye_dir), 0.f), material.shininess);
   vec3 specular = material_specular * spec * light.specular;
 
-  //vec3 emission = texture(emssion_map, frag_tex  + vec2(0., time)).rgb;
+  vec3 result = (specular + diffuse + ambient) * attenuation;
+
+  return result;
+}
+
+void main()
+{
+
+
   /*Emission */
     vec3 emission = vec3(0.0);
     if (material_specular.r ==  0.0)   /*rough check for blackbox inside spec texture */
@@ -79,7 +90,7 @@ void main()
        // emission = emission * (sin(time) * 0.5 + 0.5) * 2.0;
     }
 
-  vec3 result = (specular + diffuse + ambient+ emission) * attenuation ;
+  vec3 result = (specular + diffuse + ambient) * attenuation; //+ emission;
 
   frag_colour = vec4(result, 1.0);
 }
