@@ -1,6 +1,5 @@
 #version 400
 
-//#define DEBUG 1
 #define LIGHTS_N 1
 
 struct Material
@@ -33,10 +32,12 @@ out vec4 frag_colour;
 
 //uniform vec4 light_view_vec;
 
+uniform mat4 view;
 uniform Material material;
 uniform Light light;
 uniform sampler2D emission_map;
 uniform float time;
+#define DEBUG 1
 #ifdef DEBUG
 
 #define RED vec4(1, 0, 0, 1)
@@ -48,6 +49,7 @@ vec4 d_res = vec4(1, 1, 1, 1.);
 
 void d_split(in float val, in float a, in float b, out vec4 res)
 {
+#ifdef DEBUG
   d_fail = true;
 
   if (val < a)
@@ -56,12 +58,22 @@ void d_split(in float val, in float a, in float b, out vec4 res)
     res = GRN;
   else
     res = BLU;
+#endif
 }
 
 void d_split(in vec3 val, in float a, in float b, out vec4 res)
 {
   float n_val = (val.x + val.y + val.z) / 3.f;
   d_split(n_val, a, b, res);
+}
+
+void d_print(in vec3 val, out vec4 res)
+{
+#ifdef DEBUG
+  d_fail = true;
+  float gray = 0.21 * val.r + 0.72 * val.g + 0.07 * val.b;
+  res = gray * vec4(1.);
+#endif
 }
 
 #endif
@@ -75,12 +87,12 @@ void calculate_pointy_light(in int idx,
 {
   //vec3 ambient = vec3(0.002);
   Light light = lights[idx];
-#ifdef DEBUG
-  if (idx == 0)
-  {
-    d_split(light.pos.w, -0.5, 0.5, d_res);
-  }
-#endif
+//#ifdef DEBUG
+//  if (idx == 0)
+//  {
+//    d_split(light.pos.w, -0.5, 0.5, d_res);
+//  }
+//#endif
   vec3 ambient = material_ambient_diffuse * light.ambient;
 
   vec3 light_dir = vec3(0.0);
@@ -97,7 +109,8 @@ void calculate_pointy_light(in int idx,
     light_dir = normalize(diff);
     dist = length(diff);
   }
-
+  light_dir = normalize((view * vec4(light_dir, 1.)).xyz);
+  //d_print(light_dir, d_res);
   float attenuation = 1.f / (light.constant_c + dist * light.linear_c + dist * dist * light.quadratic_c); 
 
   vec3 norm = normalize(frag_view_normal);
