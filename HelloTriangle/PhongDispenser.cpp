@@ -2,7 +2,8 @@
 #include "PhongDispenser.h"
 
 #define MATERIAL "material."
-#define LIGHT "light."
+#define LIGHT std::string("lights")
+#define POS "pos"
 #define AMBIENT "ambient"
 #define DIFFUSE "diffuse"
 #define SPECULAR "specular"
@@ -31,6 +32,8 @@ GLint PhongDispenser::exit_error()
 
   return status;
 }
+#include <string>
+#define LIGHT_IDX(idx) LIGHT + "[" + std::to_string(idx) + "]."
 
 void LightDispenser::dispense() const
 {
@@ -38,20 +41,19 @@ void LightDispenser::dispense() const
 
   shader_.use();
 
-  shader_.set_vec3(base + AMBIENT, ambient_);
-  shader_.set_vec3(base + DIFFUSE, diffuse_);
-  shader_.set_vec3(base + SPECULAR, specular_);
+  shader_.set_vec4(LIGHT_IDX(idx_) + POS, pos_);
 
-  shader_.set_float(base + CONSTANT, constant_c_);
-  shader_.set_float(base + LINEAR, linear_c_);
-  shader_.set_float(base + QUADRATIC, quadratic_c_);
+  shader_.set_vec3(LIGHT_IDX(idx_) + AMBIENT, ambient_);
+  shader_.set_vec3(LIGHT_IDX(idx_) + DIFFUSE, diffuse_);
+  shader_.set_vec3(LIGHT_IDX(idx_) + SPECULAR, specular_);
 
-  /*if (is_material_)
-    shader_.set_int(base + SHININESS, shininess_);*/
-
+  shader_.set_float(LIGHT_IDX(idx_) + CONSTANT, constant_c_);
+  shader_.set_float(LIGHT_IDX(idx_) + LINEAR, linear_c_);
+  shader_.set_float(LIGHT_IDX(idx_) + QUADRATIC, quadratic_c_);
 }
 
 LightDispenser::LightDispenser(const Shader &shader,
+                               vec4 pos,
                                vec3 ambient,
                                vec3 diffuse,
                                vec3 specular,
@@ -59,17 +61,31 @@ LightDispenser::LightDispenser(const Shader &shader,
                                float linear_c,
                                float quadratic_c) :
   PhongDispenser(shader),
+  pos_(pos),
   ambient_(ambient),
   diffuse_(diffuse),
   specular_(specular),
   constant_c_(constant_c),
   linear_c_(linear_c),
-  quadratic_c_(quadratic_c) {}
+  quadratic_c_(quadratic_c) 
+{
+  idx_ = light_idx++;
+}
 
 LightDispenser::LightDispenser(const Shader &shader, const Light &light) :
-  LightDispenser(shader, light.ambient, light.diffuse, light.specular,
+  LightDispenser(shader, light.pos, light.ambient, light.diffuse, light.specular,
                  light.constant_c, light.linear_c, light.quadratic_c)
 {}
+
+LightDispenser::~LightDispenser()
+{
+  light_idx--;
+}
+
+void LightDispenser::set_pos(vec4 pos)
+{
+  pos_ = pos;
+}
 
 void LightDispenser::set_ambient(vec3 ambient)
 {
