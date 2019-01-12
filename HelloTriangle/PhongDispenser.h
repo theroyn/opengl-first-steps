@@ -49,10 +49,13 @@ private:
 
 };
 
+static int light_idx = 0;
+
 class LightDispenser : public PhongDispenser
 {
 public:
   LightDispenser(const Shader &shader,
+                 glm::vec4 pos = glm::vec4(0.f),
                  glm::vec3 ambient = glm::vec3(0.f),
                  glm::vec3 diffuse = glm::vec3(0.f),
                  glm::vec3 specular = glm::vec3(0.f),
@@ -62,12 +65,18 @@ public:
 
   LightDispenser(const Shader &shader, const Light &light);
 
+  ~LightDispenser();
+
   void dispense() const;
+
+  void set_pos(glm::vec4 pos);
 
   void set_ambient(glm::vec3 ambient);
   void set_diffuse(glm::vec3 diffuse);
   void set_specular(glm::vec3 specular);
 private:
+  glm::vec4 pos_;
+
   glm::vec3 ambient_;
   glm::vec3 diffuse_;
   glm::vec3 specular_;
@@ -75,6 +84,8 @@ private:
   float constant_c_;
   float linear_c_;
   float quadratic_c_;
+
+  int idx_;
 };
 
 struct Material
@@ -86,6 +97,8 @@ struct Material
 
 struct Light
 {
+  glm::vec4 pos;
+
   glm::vec3 ambient;
   glm::vec3 diffuse;
   glm::vec3 specular;
