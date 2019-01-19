@@ -164,7 +164,7 @@ float cube_coords_w_textures[] = {
 
 glm::vec3 cube_positions[] = 
 {
-  glm::vec3(0.0f,  0.0f,  0.0f),
+  glm::vec3(0.0f,  0.f,  0.0f),
   glm::vec3(2.0f,  5.0f, -15.0f),
   glm::vec3(-1.5f, -2.2f, -2.5f),
   glm::vec3(-3.8f, -2.0f, -12.3f),
@@ -175,4 +175,44 @@ glm::vec3 cube_positions[] =
   glm::vec3(1.5f,  0.2f, -1.5f),
   glm::vec3(-1.3f,  1.0f, -1.5f),
   glm::vec3(2.f,  1.7f, -2.5f)
+};
+
+static Light lights[] =
+{
+  {
+    glm::vec4(-1.f, 10.f, 0.f, 0.f),
+    glm::vec3(.2f, .2f, .2f),
+    glm::vec3(.5f, .5f, .5f),
+    glm::vec3(1.f, 1.f, 1.f),
+    1.f,
+    0.09f,
+    0.032f
+  },
+  {
+    glm::vec4(-.5f, 2.f, -15.f, 1.f),
+    glm::vec3(.2f, .2f, .2f),
+    glm::vec3(.5f, .5f, .5f),
+    glm::vec3(1.f, 1.f, 1.f),
+    1.f,
+    0.09f,
+    0.032f
+  },
+  {
+    glm::vec4(0.f, -2.f, -1.f, 1.f),
+    glm::vec3(.2f, .2f, .2f),
+    glm::vec3(.5f, .5f, .5f),
+    glm::vec3(1.f, 1.f, 1.f),
+    1.f,
+    0.09f,
+    0.032f
+  },
+  {
+    glm::vec4(.5f, -3.f, 1.f, 1.f),
+    glm::vec3(.2f, .2f, .2f),
+    glm::vec3(.5f, .5f, .5f),
+    glm::vec3(1.f, 1.f, 1.f),
+    1.f,
+    0.09f,
+    0.032f
+  }
 };

@@ -21,10 +21,10 @@ void main()
 {
   frag_normal = in_normal;
   frag_tex = in_tex;
-  frag_model_pos = vec3(model * vec4(pos, 1.0));
+  frag_model_pos = (model * vec4(pos, 1.0)).xyz;
 
   mat3 normal_matrix = transpose(inverse(mat3(view * model)));
   frag_view_normal = normal_matrix * in_normal;
   frag_view_pos = view * model * vec4(pos, 1.0);
-  gl_Position = projection * view * model * vec4(frag_model_pos, 1.0);
+  gl_Position = projection * view * vec4(frag_model_pos, 1.0);
 }

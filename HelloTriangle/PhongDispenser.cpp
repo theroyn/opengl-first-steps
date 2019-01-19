@@ -3,7 +3,7 @@
 
 #define MATERIAL "material."
 #define LIGHT std::string("lights")
-#define POS "pos"
+#define POS "view_pos"
 #define AMBIENT "ambient"
 #define DIFFUSE "diffuse"
 #define SPECULAR "specular"

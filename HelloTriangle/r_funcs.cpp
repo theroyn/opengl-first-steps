@@ -140,83 +140,16 @@ int r_draw_light(GLFWwindow *window)
   box_shader.set_int("emission_map", 2);
   glBindTexture(GL_TEXTURE_2D, emission_map);
 
-  /*GLuint diffuse_map = utility::load_texture("container2.png", result, msg, true);
-  GLuint specular_map = utility::load_texture("container2_specular.png", result, msg, true);
-  box_shader.use();
-  box_shader.set_int("material.diffuse", 0);
-  box_shader.set_int("material.specular", 1);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, diffuse_map);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, specular_map);*/
-
-  static Light lights[] =
+  std::vector<LightDispenser *> light_dispensers;
+  for (int i = 0; i < sizeof(lights) / sizeof(lights[0]); ++i)
   {
-    {
-      glm::vec4(-1.f, 0.f, 1.f, 1.f),
-      glm::vec3(.2f, .2f, .2f),
-      glm::vec3(.5f, .5f, .5f),
-      glm::vec3(1.f, 1.f, 1.f),
-      1.f,
-      0.09f,
-      0.032f
-    }/*,
-    {
-      glm::vec4(-.5f, 0.f, 1.f, 1.f),
-      glm::vec3(.2f, .2f, .2f),
-      glm::vec3(.5f, .5f, .5f),
-      glm::vec3(1.f, 1.f, 1.f),
-      1.f,
-      0.09f,
-      0.032f
-    },
-    {
-      glm::vec4(0.f, 0.f, 1.f, 1.f),
-      glm::vec3(.2f, .2f, .2f),
-      glm::vec3(.5f, .5f, .5f),
-      glm::vec3(1.f, 1.f, 1.f),
-      1.f,
-      0.09f,
-      0.032f
-    },
-    {
-      glm::vec4(.5f, 0.f, 1.f, 1.f),
-      glm::vec3(.2f, .2f, .2f),
-      glm::vec3(.5f, .5f, .5f),
-      glm::vec3(1.f, 1.f, 1.f),
-      1.f,
-      0.09f,
-      0.032f
-    }*/
-  };
-
-  LightDispenser light_dispenser0(box_shader, lights[0]);
-  /*LightDispenser light_dispenser1(box_shader, lights[1]);
-  LightDispenser light_dispenser2(box_shader, lights[2]);
-  LightDispenser light_dispenser3(box_shader, lights[3]);*/
-
-  /*LightDispenser light_dispenser(box_shader,
-                                 glm::vec3(.2f, .2f, .2f),
-                                 glm::vec3(.5f, .5f, .5f),
-                                 glm::vec3(1.f, 1.f, 1.f));*/
-  /*PhongDispenser light_dispenser(box_shader, false,
-                                 glm::vec3(1.f),
-                                 glm::vec3(1.f),
-                                 glm::vec3(1.f));*/
-
-  /*light_dispenser1.dispense();
-  light_dispenser2.dispense();
-  light_dispenser3.dispense();*/
-
-  lamp_shader.use();
+    light_dispensers.push_back(new LightDispenser(box_shader, lights[i]));
+  }
 
   glm::vec3 camera_pos(0.f, 0.f, 5.f);
   glm::vec3 camera_front(0.f, 0.f, -1.f);
   glm::vec3 world_up(0.f, 1.f, 0.f);
   params::camera = new Camera(window, camera_pos, camera_front, world_up);
-
-  //glm::vec4 lamp_pos(-1.f, 0.f, 1.f, 1.f);
 
   while (!glfwWindowShouldClose(window))
   {
@@ -238,31 +171,19 @@ int r_draw_light(GLFWwindow *window)
     // Draw box.
     box_shader.use();
     glBindVertexArray(vao[0]);
+    for (int i = 0; i < sizeof(lights) / sizeof(lights[0]); ++i)
+    {
+      lights[i].pos += glm::vec4(circle_delt * ( float )(i + 1), 0.f);
+      light_dispensers[i]->set_pos(view_trans * lights[i].pos);
+      light_dispensers[i]->dispense();
+    }
 
-    light_dispenser0.dispense();
-
-    //lamp_pos += circle_delt;
-
- /*   glm::vec3 lp1, lp2, lp3;
-    lp1 = lamp_pos + .2f;
-    lp2 = lp1 + .2f;
-    lp3 = lp2 + .2f;*/
-
-    //box_shader.set_vec4("lights[0]", view_trans * lamp_pos);
-    /*box_shader.set_vec4("lights[1]", view_trans * glm::vec4(lp1, 1.f));
-    box_shader.set_vec4("lights[2]", view_trans * glm::vec4(lp2, 1.f));
-    box_shader.set_vec4("lights[3]", view_trans * glm::vec4(lp3 + 3.f, 1.f));*/
     box_shader.set_mat4("view", view_trans);
     box_shader.set_mat4("projection", projection_trans);
 
-    //box_shader.set_float("time", 0.001*sin(p * 2));
     box_shader.set_float("time", p);
 
-    /*glm::mat4 model_trans = glm::translate(glm::mat4(), cube_positions[0]);
-    float angle = 20.0f * p;
-
-    model_trans = glm::rotate(model_trans, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));*/
-    for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < 10; ++i)
     {
       static float start_p = glfwGetTime();
       glm::mat4 model_trans = glm::translate(glm::mat4(), cube_positions[i]);
@@ -284,12 +205,15 @@ int r_draw_light(GLFWwindow *window)
 
     for (Light lamp : lights)
     {
-      glm::mat4 model_trans = glm::translate(glm::mat4(1.f), glm::vec3(lamp.pos));
-      model_trans = glm::scale(model_trans, glm::vec3(0.2f));
+      if (lamp.pos.w != 0.f)
+      {
+        glm::mat4 model_trans = glm::translate(glm::mat4(1.f), glm::vec3(lamp.pos));
+        model_trans = glm::scale(model_trans, glm::vec3(0.2f));
 
-      lamp_shader.set_mat4("model", model_trans);
+        lamp_shader.set_mat4("model", model_trans);
 
-      glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+      }
     }
 
     glfwSwapBuffers(window);
@@ -297,6 +221,11 @@ int r_draw_light(GLFWwindow *window)
 
     params::camera->update_time_deltas();
     process_input(window);
+  }
+
+  for (auto light : light_dispensers)
+  {
+    delete light;
   }
 
   return R_SUCCESS;
